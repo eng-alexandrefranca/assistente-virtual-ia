@@ -32,13 +32,16 @@ O repositório está organizado da seguinte forma:
 
 ```text
 assistente-virtual-ia/
-├── data/
+├── 📁 data/
 │   └── base_conhecimento.txt
-├── docs/
-│   └── prompt_sistema.md
-├── src/
+├── 📁 docs/
+│   ├── prompt_sistema.md
+│   ├── perfil_investidor.json        # Perfil do cliente (JSON)
+│   ├── produtos_financeiros.json     # Produtos disponíveis (JSON)
+│   └── transacoes.csv                # Histórico de transações (CSV)
+├── 📁 src/
 │   └── app.py
-└── README.md
+└── 📄 README.md
 ```
 
 
