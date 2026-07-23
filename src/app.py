@@ -3,7 +3,6 @@ import google.generativeai as genai
 import os
 import io
 from gtts import gTTS
-from audio_recorder_streamlit import audio_recorder
 from rag_engine import buscar_contexto_relevante
 from prompts import carregar_system_prompt, formatar_prompt_final
 
@@ -41,15 +40,8 @@ if "messages" not in st.session_state:
 # Carregar Prompt de Sistema
 system_prompt = carregar_system_prompt()
 
-# Painel Superior: Entrada por Voz
-st.write("🎙️ **Falar por Voz (Microfone):**")
-audio_bytes = audio_recorder(
-    text="Clique no microfone para gravar sua dúvida por áudio",
-    recording_color="#e8b62c",
-    neutral_color="#6aa36f",
-    icon_name="microphone",
-    icon_size="2x"
-)
+# Gravação por Voz NATIVA do Streamlit (Sem dependências extras que exigem compilação C++)
+audio_gravado = st.audio_input("🎙️ Enviar mensagem por Voz (Microfone):")
 
 # Exibir histórico de mensagens anteriores
 for message in st.session_state.messages:
@@ -59,22 +51,21 @@ for message in st.session_state.messages:
             st.audio(message["audio"], format="audio/mp3")
 
 user_input = None
-audio_input_bytes = None
+audio_bytes = None
 
-# Capturar entrada por voz se houver gravação recente
-if audio_bytes:
-    audio_input_bytes = audio_bytes
+# Capturar gravação nativa do Streamlit
+if audio_gravado:
+    audio_bytes = audio_gravado.read()
     user_input = "Mensagem de voz enviada pelo usuário."
 
-# Capturar entrada por texto se o usuário digitar
+# Capturar mensagem de texto se o usuário digitar
 text_input = st.chat_input("Ou digite sua dúvida por texto...")
 if text_input:
     user_input = text_input
-    audio_input_bytes = None
+    audio_bytes = None
 
-# Processamento da Mensagem (Texto ou Áudio)
+# Processamento da Mensagem
 if user_input:
-    # Registrar mensagem do usuário
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.write(user_input)
@@ -95,11 +86,10 @@ if user_input:
         try:
             model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Se for áudio, podemos passar os bytes de áudio para o Gemini processar multimodalmente
-            if audio_input_bytes:
+            if audio_bytes:
                 conteudo_gemini = [
                     prompt_completo,
-                    {"mime_type": "audio/wav", "data": audio_input_bytes}
+                    {"mime_type": "audio/wav", "data": audio_bytes}
                 ]
                 response = model.generate_content(conteudo_gemini)
             else:
@@ -108,7 +98,7 @@ if user_input:
             bot_reply = response.text
             st.write(bot_reply)
 
-            # Gerar sintese de voz (áudio) da resposta do robô para acessibilidade
+            # Gerar sintese de voz (áudio) da resposta
             bot_audio = gerar_audio_resposta(bot_reply)
             if bot_audio:
                 st.audio(bot_audio, format="audio/mp3", autoplay=True)
@@ -119,6 +109,5 @@ if user_input:
                 "audio": bot_audio
             })
         except Exception as e:
-            msg_erro = "Desculpe, ocorreu um erro ao processar a mensagem."
-            st.error(msg_erro)
+            st.error("Erro ao processar mensagem. Verifique a chave de API.")
             st.caption(f"Detalhes: {e}")
