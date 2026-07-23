@@ -1,0 +1,14 @@
+[
+  {
+    "pergunta": "Como solicitar um intérprete de LIBRAS para atendimento?",
+    "resposta": "Você pode acessar o atendimento em LIBRAS clicando no botão 'Central em LIBRAS' na barra de acessibilidade ou solicitando a transferência nesta conversa."
+  },
+  {
+    "pergunta": "O leitor de tela não está lendo os formulários. O que fazer?",
+    "resposta": "Certifique-se de usar o atalho Alt + 1 para focar o conteúdo principal. Caso o problema persista, utilize o modo de compatibilidade NVDA/JAWS ou acione nosso suporte técnico."
+  },
+  {
+    "pergunta": "Como alterar o tamanho da fonte da aplicação?",
+    "resposta": "Use as teclas Ctrl + Sinal de Mais (+) para aumentar ou Ctrl + Sinal de Menos (-) para diminuir. Também há botões A+ e A- no cabeçalho acessível."
+  }
+]

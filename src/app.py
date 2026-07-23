@@ -1,61 +1,62 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+from rag_engine import buscar_contexto_relevante
+from prompts import carregar_system_prompt, formatar_prompt_final
 
-# Configuração da página do Streamlit
-st.set_page_config(page_title="DevGuide Bot", page_icon="🚀")
-st.title("🚀 DevGuide Bot - Seu Tutor de Programação")
-st.caption("Descubra por onde começar sua jornada na tecnologia de forma simples!")
+# Configuração da página Streamlit
+st.set_page_config(page_title="Guia de Acessibilidade", page_icon="♿", layout="centered")
 
-# 1. Carregar a Base de Conhecimento e Prompt
-def carregar_contexto():
-    with open("data/base_conhecimento.txt", "r", encoding="utf-8") as f:
-        conhecimento = f.read()
-    with open("docs/prompt_sistema.md", "r", encoding="utf-8") as f:
-        prompt = f.read()
-    return f"{prompt}\n\n[BASE DE CONHECIMENTO]\n{conhecimento}"
+st.title("♿ Guia de Acessibilidade")
+st.caption("Pré-atendimento empático e direcionamento para equipes especializadas.")
 
-contexto_sistema = carregar_contexto()
+# Configurar API Key
+API_KEY = os.environ.get("GEMINI_API_KEY", "")
+if not API_KEY:
+    st.warning("⚠️ Variável GEMINI_API_KEY não configurada. Configure no ambiente ou no arquivo .env.")
 
-# 2. Configurar a API do Gemini (Requer chave gratuita em ai.google.dev)
-# Para testar localmente, configure a variável de ambiente ou substitua temporariamente por string
-API_KEY = os.environ.get("GEMINI_API_KEY", "SUA_API_KEY_AQUI")
 genai.configure(api_key=API_KEY)
 
-# Inicializar o histórico do chat no Streamlit
+# Inicializar Histórico do Chat com a nova persona
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Olá! Sou o DevGuide Bot. Estou aqui para te ajudar a escolher seu primeiro caminho na programação. Você tem interesse em criar interfaces de sites (Frontend), lógica dos bastidores (Backend) ou trabalhar com análise de informações (Dados)?"}
+        {"role": "assistant", "content": "Olá. Sou o Guia de Acessibilidade. Como posso te ajudar hoje?"}
     ]
 
-# Exibir mensagens anteriores
+# Carregar Prompt de Sistema
+system_prompt = carregar_system_prompt()
+
+# Exibir Mensagens Anteriores
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-# Entrada do usuário
-if user_input := st.chat_input("Digite sua dúvida aqui..."):
-    # Adicionar mensagem do usuário ao histórico
+# Entrada do Usuário
+if user_input := st.chat_input("Digite sua mensagem aqui..."):
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.write(user_input)
 
-    # Chamar o modelo de IA passando o histórico + contexto fixo
-    try:
-        model = genai.GenerativeModel('gemini-pro')
-        
-        # Construindo o prompt final contendo as regras e a pergunta do usuário
-        prompt_completo = f"{contexto_sistema}\n\nHistórico da conversa:\n"
-        for msg in st.session_state.messages:
-            prompt_completo += f"{msg['role']}: {msg['content']}\n"
-        
-        response = model.generate_content(prompt_completo)
-        bot_reply = response.text
+    # 1. Recuperar contexto da base de conhecimento (RAG)
+    contexto = buscar_contexto_relevante(user_input)
 
-        # Exibir resposta do bot
-        with st.chat_message("assistant"):
+    # 2. Formatar histórico recente
+    historico_texto = ""
+    for msg in st.session_state.messages[-6:]:
+        historico_texto += f"{msg['role']}: {msg['content']}\n"
+
+    # 3. Montar prompt completo
+    prompt_completo = formatar_prompt_final(system_prompt, contexto, historico_texto, user_input)
+
+    # 4. Gerar Resposta via Gemini API
+    with st.chat_message("assistant"):
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            response = model.generate_content(prompt_completo)
+            bot_reply = response.text
             st.write(bot_reply)
-        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-        
-    except Exception as e:
-        st.error("Erro ao conectar com a IA. Verifique sua API Key.")
+            st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+        except Exception as e:
+            msg_erro = "Desculpe, ocorreu um erro ao conectar com a IA."
+            st.error(msg_erro)
+            st.caption(f"Detalhes: {e}")

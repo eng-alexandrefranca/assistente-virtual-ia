@@ -1,0 +1,22 @@
+{
+  "equipe_alpha": {
+    "nome": "Equipe Alpha",
+    "foco": "Suporte a Limitações Visuais (Leitores de Tela, Zoom, Contraste)",
+    "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
+  },
+  "equipe_beta": {
+    "nome": "Equipe Beta",
+    "foco": "Suporte a Limitações Auditivas (LIBRAS, Chat de Texto, Legendas)",
+    "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
+  },
+  "equipe_gamma": {
+    "nome": "Equipe Gamma",
+    "foco": "Suporte a Neurodivergências / Limitações Intelectuais (Comunicação Simplificada, Tempo Estendido)",
+    "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
+  },
+  "equipe_delta": {
+    "nome": "Equipe Delta",
+    "foco": "Suporte a Limitações Físicas / Motoras (Navegação por Teclado, Comandos de Voz)",
+    "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
+  }
+}
