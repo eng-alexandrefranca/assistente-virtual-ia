@@ -30,8 +30,8 @@ def criar_modelo_gemini():
     modelos_para_testar = [
         'gemini-1.5-flash',
         'gemini-1.5-flash-latest',
-        'gemini-pro',
-        'models/gemini-pro',
+        'gemini-1.5-flash',
+        'models/gemini-1.5-flash',
         'gemini-2.0-flash'
     ]
     
@@ -42,7 +42,7 @@ def criar_modelo_gemini():
         except Exception:
             continue
             
-    return genai.GenerativeModel('gemini-pro')
+    return genai.GenerativeModel('gemini-1.5-flash')
 
 # Função para converter texto da resposta em áudio (Text-to-Speech)
 def gerar_audio_resposta(texto: str) -> bytes:
@@ -111,7 +111,7 @@ if user_input:
         try:
             # Tenta instanciar o modelo disponível na sua conta
             model = None
-            nomes_modelos = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro', 'models/gemini-1.5-flash']
+            nomes_modelos = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'models/gemini-1.5-flash']
             
             response = None
             for nome_modelo in nomes_modelos:
@@ -132,7 +132,7 @@ if user_input:
 
             if not response:
                 # Tentativa de fallback padrão
-                m = genai.GenerativeModel('gemini-pro')
+                m = genai.GenerativeModel('gemini-1.5-flash')
                 response = m.generate_content(prompt_completo)
 
             bot_reply = response.text
