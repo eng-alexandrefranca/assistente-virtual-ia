@@ -2,9 +2,13 @@ import streamlit as st
 import google.generativeai as genai
 import os
 import io
+from dotenv import load_dotenv
 from gtts import gTTS
 from rag_engine import buscar_contexto_relevante
 from prompts import carregar_system_prompt, formatar_prompt_final
+
+# 1. Carregar variáveis do arquivo .env automaticamente
+load_dotenv()
 
 # Configuração da página Streamlit
 st.set_page_config(page_title="Guia de Acessibilidade", page_icon="♿", layout="centered")
@@ -12,10 +16,11 @@ st.set_page_config(page_title="Guia de Acessibilidade", page_icon="♿", layout=
 st.title("♿ Guia de Acessibilidade")
 st.caption("Pré-atendimento empático por Texto e Voz, com direcionamento especializado.")
 
-# Configurar API Key
-API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Configurar API Key (suporta tanto GEMINI_API_KEY quanto GOOGLE_API_KEY)
+API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
+
 if not API_KEY:
-    st.warning("⚠️ Variável GEMINI_API_KEY não configurada. Configure no ambiente ou no arquivo .env.")
+    st.warning("⚠️ Variável GEMINI_API_KEY ou GOOGLE_API_KEY não configurada no arquivo .env.")
 
 genai.configure(api_key=API_KEY)
 
@@ -40,7 +45,7 @@ if "messages" not in st.session_state:
 # Carregar Prompt de Sistema
 system_prompt = carregar_system_prompt()
 
-# Gravação por Voz NATIVA do Streamlit (Sem dependências extras que exigem compilação C++)
+# Gravação por Voz NATIVA do Streamlit
 audio_gravado = st.audio_input("🎙️ Enviar mensagem por Voz (Microfone):")
 
 # Exibir histórico de mensagens anteriores
@@ -109,5 +114,5 @@ if user_input:
                 "audio": bot_audio
             })
         except Exception as e:
-            st.error("Erro ao processar mensagem. Verifique a chave de API.")
+            st.error("Erro ao processar mensagem. Verifique a chave de API no arquivo .env.")
             st.caption(f"Detalhes: {e}")
