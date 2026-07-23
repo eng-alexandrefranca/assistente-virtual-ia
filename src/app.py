@@ -1,6 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
 import os
+import io
+from gtts import gTTS
+from audio_recorder_streamlit import audio_recorder
 from rag_engine import buscar_contexto_relevante
 from prompts import carregar_system_prompt, formatar_prompt_final
 
@@ -8,7 +11,7 @@ from prompts import carregar_system_prompt, formatar_prompt_final
 st.set_page_config(page_title="Guia de Acessibilidade", page_icon="♿", layout="centered")
 
 st.title("♿ Guia de Acessibilidade")
-st.caption("Pré-atendimento empático e direcionamento para equipes especializadas.")
+st.caption("Pré-atendimento empático por Texto e Voz, com direcionamento especializado.")
 
 # Configurar API Key
 API_KEY = os.environ.get("GEMINI_API_KEY", "")
@@ -17,7 +20,19 @@ if not API_KEY:
 
 genai.configure(api_key=API_KEY)
 
-# Inicializar Histórico do Chat com a nova persona
+# Função para converter texto da resposta em áudio (Text-to-Speech)
+def gerar_audio_resposta(texto: str) -> bytes:
+    try:
+        tts = gTTS(text=texto, lang='pt', slow=False)
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp.read()
+    except Exception as e:
+        print(f"Erro ao gerar áudio TTS: {e}")
+        return None
+
+# Inicializar Histórico do Chat
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "assistant", "content": "Olá. Sou o Guia de Acessibilidade. Como posso te ajudar hoje?"}
@@ -26,13 +41,40 @@ if "messages" not in st.session_state:
 # Carregar Prompt de Sistema
 system_prompt = carregar_system_prompt()
 
-# Exibir Mensagens Anteriores
+# Painel Superior: Entrada por Voz
+st.write("🎙️ **Falar por Voz (Microfone):**")
+audio_bytes = audio_recorder(
+    text="Clique no microfone para gravar sua dúvida por áudio",
+    recording_color="#e8b62c",
+    neutral_color="#6aa36f",
+    icon_name="microphone",
+    icon_size="2x"
+)
+
+# Exibir histórico de mensagens anteriores
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
+        if "audio" in message and message["audio"]:
+            st.audio(message["audio"], format="audio/mp3")
 
-# Entrada do Usuário
-if user_input := st.chat_input("Digite sua mensagem aqui..."):
+user_input = None
+audio_input_bytes = None
+
+# Capturar entrada por voz se houver gravação recente
+if audio_bytes:
+    audio_input_bytes = audio_bytes
+    user_input = "Mensagem de voz enviada pelo usuário."
+
+# Capturar entrada por texto se o usuário digitar
+text_input = st.chat_input("Ou digite sua dúvida por texto...")
+if text_input:
+    user_input = text_input
+    audio_input_bytes = None
+
+# Processamento da Mensagem (Texto ou Áudio)
+if user_input:
+    # Registrar mensagem do usuário
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.write(user_input)
@@ -52,11 +94,31 @@ if user_input := st.chat_input("Digite sua mensagem aqui..."):
     with st.chat_message("assistant"):
         try:
             model = genai.GenerativeModel('gemini-1.5-flash')
-            response = model.generate_content(prompt_completo)
+            
+            # Se for áudio, podemos passar os bytes de áudio para o Gemini processar multimodalmente
+            if audio_input_bytes:
+                conteudo_gemini = [
+                    prompt_completo,
+                    {"mime_type": "audio/wav", "data": audio_input_bytes}
+                ]
+                response = model.generate_content(conteudo_gemini)
+            else:
+                response = model.generate_content(prompt_completo)
+
             bot_reply = response.text
             st.write(bot_reply)
-            st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+
+            # Gerar sintese de voz (áudio) da resposta do robô para acessibilidade
+            bot_audio = gerar_audio_resposta(bot_reply)
+            if bot_audio:
+                st.audio(bot_audio, format="audio/mp3", autoplay=True)
+
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": bot_reply,
+                "audio": bot_audio
+            })
         except Exception as e:
-            msg_erro = "Desculpe, ocorreu um erro ao conectar com a IA."
+            msg_erro = "Desculpe, ocorreu um erro ao processar a mensagem."
             st.error(msg_erro)
             st.caption(f"Detalhes: {e}")

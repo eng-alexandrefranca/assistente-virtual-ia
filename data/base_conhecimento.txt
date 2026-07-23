@@ -20,5 +20,10 @@
 - Solução rápida: Usar a tecla Tab para navegar pelos botões do site.
 - Direcionamento Humano: Encaminhar para a Equipe Delta (Especializada em Acessibilidade Motora e Teclado).
 
+5. Suporte a Casos Gerais / Privacidade (Prefere não informar):
+- Recursos disponíveis: Atendimento acolhedor e sigiloso por equipe humana especializada em escuta e triagem detalhada.
+- Solução rápida: Oferecer direcionamento direto sem necessidade de justificativa ou especificação da limitação.
+- Direcionamento Humano: Encaminhar para a Equipe de Casos Gerais.
+
 === DIRECIONAMENTO HUMANO ===
 Instrução para início do chat humano: Orientar o usuário a clicar no botão azul escrito "Iniciar Chat Humano".

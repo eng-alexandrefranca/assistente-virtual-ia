@@ -18,5 +18,10 @@
     "nome": "Equipe Delta",
     "foco": "Suporte a Limitações Físicas / Motoras (Navegação por Teclado, Comandos de Voz)",
     "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
+  },
+  "equipe_casos_gerais": {
+    "nome": "Equipe de Casos Gerais",
+    "foco": "Triagem acolhedora para usuários que preferem não informar o tipo de limitação ou casos não especificados",
+    "acao_usuario": "Clique no botão azul escrito 'Iniciar Chat Humano'."
   }
 }
