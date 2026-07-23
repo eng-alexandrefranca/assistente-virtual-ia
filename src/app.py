@@ -16,13 +16,33 @@ st.set_page_config(page_title="Guia de Acessibilidade", page_icon="♿", layout=
 st.title("♿ Guia de Acessibilidade")
 st.caption("Pré-atendimento empático por Texto e Voz, com direcionamento especializado.")
 
-# Configurar API Key (suporta tanto GEMINI_API_KEY quanto GOOGLE_API_KEY)
+# Configurar API Key
 API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY", "")
 
 if not API_KEY:
     st.warning("⚠️ Variável GEMINI_API_KEY ou GOOGLE_API_KEY não configurada no arquivo .env.")
 
 genai.configure(api_key=API_KEY)
+
+# Função para obter um modelo válido com suporte a fallback
+def criar_modelo_gemini():
+    # Lista de nomes de modelos suportados pela API gratuita
+    modelos_para_testar = [
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-pro',
+        'models/gemini-pro',
+        'gemini-2.0-flash'
+    ]
+    
+    for nome_modelo in modelos_para_testar:
+        try:
+            model = genai.GenerativeModel(nome_modelo)
+            return model
+        except Exception:
+            continue
+            
+    return genai.GenerativeModel('gemini-pro')
 
 # Função para converter texto da resposta em áudio (Text-to-Speech)
 def gerar_audio_resposta(texto: str) -> bytes:
@@ -86,19 +106,34 @@ if user_input:
     # 3. Montar prompt completo
     prompt_completo = formatar_prompt_final(system_prompt, contexto, historico_texto, user_input)
 
-    # 4. Gerar Resposta via Gemini API
+    # 4. Gerar Resposta via Gemini API com Fallback
     with st.chat_message("assistant"):
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            # Tenta instanciar o modelo disponível na sua conta
+            model = None
+            nomes_modelos = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-pro', 'models/gemini-1.5-flash']
             
-            if audio_bytes:
-                conteudo_gemini = [
-                    prompt_completo,
-                    {"mime_type": "audio/wav", "data": audio_bytes}
-                ]
-                response = model.generate_content(conteudo_gemini)
-            else:
-                response = model.generate_content(prompt_completo)
+            response = None
+            for nome_modelo in nomes_modelos:
+                try:
+                    m = genai.GenerativeModel(nome_modelo)
+                    if audio_bytes:
+                        conteudo_gemini = [
+                            prompt_completo,
+                            {"mime_type": "audio/wav", "data": audio_bytes}
+                        ]
+                        response = m.generate_content(conteudo_gemini)
+                    else:
+                        response = m.generate_content(prompt_completo)
+                    if response:
+                        break
+                except Exception:
+                    continue
+
+            if not response:
+                # Tentativa de fallback padrão
+                m = genai.GenerativeModel('gemini-pro')
+                response = m.generate_content(prompt_completo)
 
             bot_reply = response.text
             st.write(bot_reply)
